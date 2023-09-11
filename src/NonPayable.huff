@@ -10,4 +10,13 @@
 
 #define macro MAIN() = takes(0) returns(0) {
 
+    callvalue
+
+    0x00 eq iszero error jumpi
+
+    0x20 0x00 return
+
+    error:
+        0x20 0x00 revert
+
 }
