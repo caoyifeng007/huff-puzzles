@@ -33,6 +33,9 @@ contract Add1Test is Test, NonMatchingSelectorHelper {
             callData,
             address(add1)
         );
+
+        console.log(success);
+
         assert(!success);
     }
 }
