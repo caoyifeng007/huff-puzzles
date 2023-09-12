@@ -13,5 +13,35 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
+
+    0x00 calldataload 0xe0 shr
+
+    __FUNC_SIG(value) eq value jumpi
+
+    0x20 0x00 revert
+
+    value:
+        VALUE()
+ }
+
+ #define macro VALUE() = takes(0) returns(0) {
     
+    // first arg1, put arg1 in topic2
+    0x04 calldataload
+
+    // secodn arg2, put arg2 in memory 
+    0x24 calldataload
+
+    0x00 mstore
+
+    // put eventhas in topic1
+    __EVENT_HASH(Value)
+
+    // memory size
+    0x20
+
+    // memory offset
+    0x00
+
+    log2
  }
