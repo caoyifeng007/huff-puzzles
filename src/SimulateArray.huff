@@ -24,6 +24,143 @@
  #define error OutOfBounds()
  #define error ZeroArray()
 
+ #define constant ARRAY_SLOT0 = FREE_STORAGE_POINTER()
+
  #define macro MAIN() = takes(0) returns(0) {
+
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(pushh) eq pushh jumpi
+    dup1 __FUNC_SIG(popp) eq popp jumpi
+    dup1 __FUNC_SIG(read) eq read jumpi
+    dup1 __FUNC_SIG(length) eq length jumpi
+    dup1 __FUNC_SIG(write) eq write jumpi
+
+    0x20 0x00 revert
+
+    out_of_bounds_error:
+        __ERROR(OutOfBounds)
+        REVERT()
+
+    zero_array_error:
+        __ERROR(ZeroArray)
+        REVERT()
+
+    pushh:
+        PUSHH()
+    popp:
+        POPP()
+    read:
+        READ()
+    length:
+        LENGTH()
+    write:
+        WRITE()
+ }
+
+ #define macro PUSHH() = takes(0) returns(0) {
+
+    [ARRAY_SLOT0] sload dup1    // [len, len]
+
+    GET_LOCATION()              // [location, len]
+
+    0x04 calldataload           // [arg, location, len]
+
+    swap1 sstore                // [len]
+
+    // len++
+    0x01 add [ARRAY_SLOT0] sstore
+    // INCREASE_ARRAY_LEN()
+
+    0x20 0x00 return
+ }
+
+ #define macro POPP() = takes(0) returns(0) {
+
+    ZERO_ARRAY_CHECK()      // [len]
+
+    // index of last item
+    0x01 swap1 sub dup1         // [len - 1, len - 1]
+
+    GET_LOCATION()              // [location, len - 1]
+
+    // reset corresponding slot
+    0x00 swap1 sstore         // [len - 1]
+
+    // len--
+    [ARRAY_SLOT0] sstore
+
+    0x20 0x00 return
+ }
+
+ #define macro READ() = takes(0) returns(0) {
+
+    OUTOFBOUNDS_CHECK()        // [arg1, len]
     
+    GET_LOCATION()            // [location, len]
+
+    sload 0x00 mstore
+
+    0x20 0x00 return
+
+ }
+
+ #define macro LENGTH() = takes(0) returns(0) {
+    [ARRAY_SLOT0] sload
+
+    0x00 mstore
+
+    0x20 0x00 return
+ }
+
+ #define macro WRITE() = takes(0) returns(0) {
+
+    OUTOFBOUNDS_CHECK()         //  [arg1, len]
+
+    GET_LOCATION()              // [location, len]
+
+    0x24 calldataload           // [arg2, location, len]
+
+    swap1 sstore                // [len]
+
+    // write does not change arr length
+
+    0x20 0x00 return
+ }
+
+ #define macro GET_LOCATION() = takes(1) returns(1) {
+
+    // [index]
+    0x00 mstore
+
+    [ARRAY_SLOT0]
+
+    0x20 mstore
+
+    0x40 0x00 sha3
+    
+ }
+
+ #define macro ZERO_ARRAY_CHECK() = takes(0) returns(1) {
+
+    [ARRAY_SLOT0] sload dup1     // [len, len]
+    iszero zero_array_error jumpi
+ }
+
+ #define macro OUTOFBOUNDS_CHECK() = takes(0) returns(1) {
+
+    [ARRAY_SLOT0] sload         // [len]
+
+    0x04 calldataload         // [arg1, len]
+
+    // len <= arg ? revert
+    dup1 dup3 gt iszero 
+
+    out_of_bounds_error jumpi // [arg1, len]
+ }
+
+ #define macro REVERT() = takes(1) returns(0) {
+
+    0x00 mstore
+    0x04 0x00 revert
  }
