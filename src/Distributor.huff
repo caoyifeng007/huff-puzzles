@@ -14,5 +14,65 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
-   
+    
+    0x00 calldataload 0xe0 shr
+
+    __FUNC_SIG(distribute) eq distribute jumpi
+
+    0x20 0x00 revert
+
+    distribute:
+        DISTRIBUTE()
+ }
+
+ #define macro DISTRIBUTE() = takes(0) returns(0) {
+
+    // arr len
+    0x24 calldataload
+
+    // calculate distribute amount
+    dup1 callvalue div       // [distribute_amount, len]
+
+    // i
+    0x00                  // [i, distribute_amount, len]
+
+    loop:
+        // i == len ? return
+        dup1 dup4 eq end jumpi
+        // i * 0x20 + 0x44
+        dup1 0x20 mul 0x44 add
+        // load item
+        calldataload    // [item, i, distribute_amount, len]
+
+        SEND()
+
+        // i++
+        0x01 add  // [i, item, distribute_amount, len]
+
+        loop jump
+    
+    end:
+        0x20 0x00 return
+
+ }
+
+ #define macro SEND() = takes(1) returns(0) {
+
+    // [item, i, distribute_amount, len]
+
+    0x00 0x00 0x00 0x00  // [0, 0, 0, 0, item, i, distribute_amount, len]
+
+    swap4  // [item, 0, 0, 0, 0, i, distribute_amount, len]
+
+    // value
+    dup7   // [distribute_amount, item, 0, 0, 0, 0, i, distribute_amount, len]
+
+    swap1  // [item, distribute_amount, 0, 0, 0, 0, i, distribute_amount, len]
+
+    gas  // [gas, item, distribute_amount, 0, 0, 0, 0, i, distribute_amount, len]
+
+    call
+
+    pop
+
  }
